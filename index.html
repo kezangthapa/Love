@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Love Heart 3D</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    overflow:hidden;
+    background:#000;
+    height:100vh;
+    touch-action:none;
+    font-family:Arial,sans-serif;
+}
+
+canvas{
+    position:absolute;
+    inset:0;
+}
+
+#centerText{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:clamp(30px,8vw,70px);
+    text-shadow:
+        0 0 10px #fff,
+        0 0 20px #ff4d6d,
+        0 0 40px #ff4d6d;
+    pointer-events:none;
+    z-index:10;
+}
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+<div id="centerText">I Love You</div>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let w,h;
+
+function resize(){
+    w=canvas.width=window.innerWidth;
+    h=canvas.height=window.innerHeight;
+}
+resize();
+window.addEventListener("resize",resize);
+
+let mouseX=0;
+let mouseY=0;
+
+document.addEventListener("mousemove",(e)=>{
+    mouseX=(e.clientX-w/2)/200;
+    mouseY=(e.clientY-h/2)/200;
+});
+
+document.addEventListener("touchmove",(e)=>{
+    mouseX=(e.touches[0].clientX-w/2)/200;
+    mouseY=(e.touches[0].clientY-h/2)/200;
+});
+
+const words=[];
+
+for(let t=0;t<Math.PI*2;t+=0.08){
+
+    let x=16*Math.pow(Math.sin(t),3);
+    let y=
+      13*Math.cos(t)
+      -5*Math.cos(2*t)
+      -2*Math.cos(3*t)
+      -Math.cos(4*t);
+
+    for(let z=-10;z<=10;z+=2){
+        words.push({
+            x:x*18,
+            y:-y*18,
+            z:z*8,
+            text:"I love you"
+        });
+    }
+}
+
+const particles=[];
+
+for(let i=0;i<150;i++){
+    particles.push({
+        x:Math.random()*w,
+        y:Math.random()*h,
+        r:Math.random()*2+1,
+        speed:Math.random()*0.8+0.2
+    });
+}
+
+let rotY=0;
+
+function rotateY(x,z,a){
+    return {
+        x:x*Math.cos(a)-z*Math.sin(a),
+        z:x*Math.sin(a)+z*Math.cos(a)
+    };
+}
+
+function rotateX(y,z,a){
+    return {
+        y:y*Math.cos(a)-z*Math.sin(a),
+        z:y*Math.sin(a)+z*Math.cos(a)
+    };
+}
+
+function animate(){
+
+    ctx.clearRect(0,0,w,h);
+
+    particles.forEach(p=>{
+
+        p.y-=p.speed;
+
+        if(p.y<0){
+            p.y=h;
+            p.x=Math.random()*w;
+        }
+
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+
+        ctx.fillStyle="rgba(255,80,120,0.7)";
+        ctx.fill();
+    });
+
+    rotY+=0.01;
+
+    const arr=[];
+
+    words.forEach(point=>{
+
+        let rx=rotateY(point.x,point.z,rotY+mouseX);
+
+        let ry=rotateX(point.y,rx.z,mouseY);
+
+        const scale=500/(500+ry.z);
+
+        arr.push({
+            x:rx.x*scale+w/2,
+            y:ry.y*scale+h/2,
+            scale,
+            z:ry.z,
+            text:point.text
+        });
+    });
+
+    arr.sort((a,b)=>a.z-b.z);
+
+    arr.forEach(p=>{
+
+        ctx.save();
+
+        ctx.translate(p.x,p.y);
+
+        ctx.scale(p.scale,p.scale);
+
+        ctx.font="14px Arial";
+
+        ctx.fillStyle="#ff5f8a";
+
+        ctx.shadowColor="#ff5f8a";
+        ctx.shadowBlur=20;
+
+        ctx.fillText(p.text,0,0);
+
+        ctx.restore();
+    });
+
+    requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+
+</body>
+</html>
